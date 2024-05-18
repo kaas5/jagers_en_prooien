@@ -4,19 +4,17 @@ from simulation import Simulation
 import os
 os.environ['SDL_AUDIODRIVER'] = 'directx'
 
-time = 50
-visual_range = 0
-projected_range = 20
-separation_factor = 0
-alignment_factor = 0
-cohesion_factor = 0
-turnfactor = 0
+population = []
+
+def fitness(param_set):
+    simulation = Simulation(window, margin, nr_agents, render_screen, run_for_ticks = 1000, param_set = param_set)
+    fitness = simulation.run()
+    return
 
 if __name__ == "__main__":
     window = (250, 250)
     margin =   420
-    simulation = Simulation(window, margin, 50)
-    simulation.init_graphics() # voor als je de zooi wil zien op een scherm
-    while True:
-        simulation.update()
-        simulation.render() # voor als je de zooi wil zien op een scherm
+    nr_agents = 50
+    render_screen = False
+    simulation = Simulation(window, margin, nr_agents, render_screen, run_for_ticks = 1000)
+    simulation.run()

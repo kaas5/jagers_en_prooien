@@ -7,33 +7,45 @@ from boids import Boid
 from scipy.spatial import KDTree
 from predator import Predator
 
-time = 120
 class Simulation():
-    def __init__(self, window, margin, Number_of_agents,
-            separation_factor = 0.039,
-            alignment_factor = 0.5,
-            cohesion_factor = 0.002,
-            turnfactor = 100,
-            visual_range = 25,
-        ):
-        self.draw_fps = True
-        self.log_to_console = True
-
+    def __init__(self, window, margin, nr_agents, render_screen, run_for_ticks = None, param_set = None):
         self.window = window
         self.margin = margin
-        self.Number_of_agents = Number_of_agents
+        self.nr_agents = nr_agents
+        self.render_screen = render_screen
+        self.run_for_ticks = run_for_ticks
+        
+        self.draw_fps = True
+        self.log_to_console = True
+        self.max_fps = 120 # werkt alleen als je de boel gaat renderen
 
-        self.boids =  [Boid(window,margin) for _ in range(Number_of_agents)]
+        self.boids =  [Boid(window,margin) for _ in range(nr_agents)]
         self.predator = Predator(window)
-        self.update_tick = 0 
-
         self.kdtree = KDTree([[boid.x, boid.y] for boid in self.boids])
+        self.tick = 0 
 
-        self.separation_factor = separation_factor
-        self.alignment_factor = alignment_factor
-        self.cohesion_factor = cohesion_factor
-        self.turnfactor = turnfactor
-        self.visual_range = visual_range
+        if param_set == None:
+            self.separation_factor = 0.039
+            self.alignment_factor = 0.5
+            self.cohesion_factor = 0.002
+            self.turnfactor = 100
+            self.visual_range = 25
+        else:
+            self.separation_factor = param_set[0]
+            self.alignment_factor = param_set[1]
+            self.cohesion_factor = param_set[2]
+            self.turnfactor = param_set[3]
+            self.visual_range = param_set[4]
+
+        if render_screen: # voor als je de zooi wil zien op een scherm
+            self.init_graphics()
+
+    def run(self):
+        while self.run_for_ticks == None or self.tick < self.run_for_ticks: # ga oneindig door
+            self.update()
+            if self.render_screen:
+                self.render()
+        return self.nr_agents
 
     def init_graphics(self):
         pygame.init()
@@ -43,14 +55,12 @@ class Simulation():
         self.font = pygame.font.Font(None, 18)  # Create a font object
 
     def update(self):
-
-
         self.predator.uptate(self.window, 50, self.kdtree, self.boids)
-        self.Number_of_agents = len(self.boids)
+        self.nr_agents = len(self.boids)
         
-        if self.Number_of_agents == 0:
+        if self.nr_agents == 0:
             # alles weg
-            return self.update_tick
+            return self.tick
         
         self.kdtree = KDTree([[boid.x, boid.y] for boid in self.boids])            
         
@@ -58,14 +68,14 @@ class Simulation():
             boid.update(self.window, self.turnfactor, self.separation_factor, self.cohesion_factor, self.alignment_factor, self.kdtree, self.boids, self.visual_range, self.predator, self.predator.predation_detected)
         
         # logging
-        if self.log_to_console and self.update_tick % 100 == 0:
-            print(f'tick {self.update_tick}: nr_boids={self.Number_of_agents}')
-        self.update_tick += 1
+        if self.log_to_console and self.tick % 100 == 0:
+            print(f'tick {self.tick}: nr_boids={self.nr_agents}')
+        self.tick += 1
 
     def render(self):
-        # mooie spaghetti hehe
+        # begin mooie spaghetti hehe
         events = pygame.event.get()
-        for events in pygame.event.get():  # loop through all events
+        for events in pygame.event.get():
             if events.type == pygame.QUIT:
                 pygame.quit()
                 quit()
@@ -88,6 +98,5 @@ class Simulation():
 
         pygame.display.update()
         
-        self.clock.tick(time) # voor het regelen van fps
-        #self.clock.tick()
+        self.clock.tick(self.max_fps) # voor het regelen van fps
 
