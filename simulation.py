@@ -8,16 +8,21 @@ from scipy.spatial import KDTree
 from predator import Predator
 
 class Simulation():
-    def __init__(self, window, margin, nr_agents, render_screen, run_for_ticks = None, param_set = None):
+    def __init__(self, window, margin, nr_agents, render_screen, 
+                run_for_ticks = None,
+                draw_fps = True,
+                log_to_console = True,
+                max_fps = 60,
+                param_set = None):
         self.window = window
         self.margin = margin
         self.nr_agents = nr_agents
         self.render_screen = render_screen # voor als je de zooi wil zien op een scherm
         self.run_for_ticks = run_for_ticks
         
-        self.draw_fps = True
-        self.log_to_console = True
-        self.max_fps = 20 # werkt alleen als je de boel gaat renderen
+        self.draw_fps = draw_fps
+        self.log_to_console = log_to_console
+        self.max_fps = max_fps # werkt alleen als je de boel gaat renderen
 
         self.boids =  [Boid(window,margin) for _ in range(nr_agents)]
         self.predator = Predator(window)
@@ -90,6 +95,9 @@ class Simulation():
             
         pygame.draw.polygon(self.screen, 'blue', self.predator.draw_triangle())
         pygame.draw.circle(self.screen, 'green', self.predator.centroid, 5)
+        for visible_prey_index in self.predator.visual_indices:
+            prey = self.boids[visible_prey_index]
+            pygame.draw.circle(self.screen, 'green', [prey.x, prey.y], 2)
 
         if self.draw_fps:
             fps = int(self.clock.get_fps())

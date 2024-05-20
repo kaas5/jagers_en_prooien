@@ -18,13 +18,13 @@ class Predator():
         self.eating_duration = 0
         self.max_eating_duration = 50
         self.field_of_view = field_of_view
+        self.visual_indices = []
 
     def strat1(self, visual_indices, preys):
         closest_prey_index = min(visual_indices, key=lambda i: np.linalg.norm(np.array([preys[i].x, preys[i].y]) - np.array([self.x, self.y])))
-        return preys[closest_prey_index]
+        return preys[closest_prey_index], closest_prey_index
 
     def strat3(self, visual_indices, preys):
-        # todo: rekening houden met visual_indices
         visual_preys = [preys[index] for index in visual_indices]
         preys_x = list(p.x for p in visual_preys)
         preys_y = list(p.y for p in visual_preys)
@@ -32,16 +32,18 @@ class Predator():
         accum = []
 
         # schuif de array van preys 'langs elkaar', bereken distance in bulk en sla op
-        for j in range(len(visual_indices)): 
-            compare_preys_in_range = np.roll(preys_in_range, j, axis=1)
+        for j in range(len(visual_indices) - 1): 
+            compare_preys_in_range = np.roll(preys_in_range, j + 1, axis=1)
             distances = np.sum(np.square(preys_in_range - compare_preys_in_range), axis=0)
             accum.append(distances)
 
         # je wil de maximum van elke individuele minimum distance!!!
+        if len(accum) == 0: return visual_preys[0], visual_indices[0]
+
         accum = np.stack(accum)
         min_distance = np.min(accum, axis=0)
         max_distance_index = np.argmax(min_distance)
-        return visual_preys[max_distance_index]
+        return visual_preys[max_distance_index], visual_indices[max_distance_index]
 
     def filter_indices_in_fov(self, visual_indices, preys):
         filtered_visual_indices = []
@@ -59,23 +61,23 @@ class Predator():
         return filtered_visual_indices
 
     def tracking_behaviour(self, kdtree, preys):
-        speed_norm = np.sqrt(self.vx**2 + self.vy**2)
-        visual_indices = kdtree.query_ball_point((self.x, self.y), self.visual_predation)
         self.centroid = [self.x, self.y]
+        speed_norm = np.sqrt(self.vx**2 + self.vy**2)
 
-        # hier al kijken of prey in fov zit!
-        visual_indices = self.filter_indices_in_fov(visual_indices, preys)
+        self.visual_indices = kdtree.query_ball_point((self.x, self.y), self.visual_predation)
+        if len(self.visual_indices) != 0:
+            self.visual_indices = self.filter_indices_in_fov(self.visual_indices, preys)
         
-        if len(visual_indices) == 0 and self.predation_detected == True :
+        if len(self.visual_indices) == 0 and self.predation_detected == True :
             # Any prey can't be seen, so the predator is randomly moving
             self.vx = self.vx + np.random.uniform(-0.1, 0.1)
             self.vy = self.vy + np.random.uniform(-0.1, 0.1)
 
-        if len(visual_indices) != 0:
+        if len(self.visual_indices) != 0:
             self.predation_detected = True #If a prey is detected, the flag is set to True 
             # Use a strategy to find the prefered prey
-            #selected_prey = self.strat1(visual_indices, preys)
-            selected_prey = self.strat3(visual_indices, preys)
+            #selected_prey, selected_prey_index = self.strat1(visual_indices, preys)
+            selected_prey, selected_prey_index = self.strat3(self.visual_indices, preys)
             
             angle_to_prey = np.arctan2(selected_prey.y - self.y, selected_prey.x - self.x)
             
@@ -90,6 +92,7 @@ class Predator():
             #If the prey is closed to the predator, the prey is eaten
             if np.linalg.norm(np.array([self.x, self.y]) - np.array([selected_prey.x, selected_prey.y])) < 5:
                 preys.remove(selected_prey)
+                self.visual_indices = [] # dit updaten voor 1 frame is erg veel gedoe, skippen we
                 self.eating = True
             
                     
@@ -119,7 +122,7 @@ class Predator():
         rotated_triangle = np.dot(triangle, rotation_matrix.T) + center
 
         return [(int(point[0]), int(point[1])) for point in rotated_triangle]
-    
+
     def speed_limit(self):
         v_max = 1.68
         v_min = 1.68
