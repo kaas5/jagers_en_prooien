@@ -16,7 +16,6 @@ class Simulation():
                 param_set = None):
         self.window = window
         self.margin = margin
-        self.nr_agents = nr_agents
         self.render_screen = render_screen # voor als je de zooi wil zien op een scherm
         self.run_for_ticks = run_for_ticks
         
@@ -25,33 +24,29 @@ class Simulation():
         self.max_fps = max_fps # werkt alleen als je de boel gaat renderen
 
         self.boids =  [Boid(window,margin) for _ in range(nr_agents)]
-        self.predator = Predator(window)
+        self.predator = Predator(window, field_of_view=np.pi/2)
         self.kdtree = KDTree([[boid.x, boid.y] for boid in self.boids])
         self.tick = 0 
+
+        self.turnfactor = 100 # voor nu hardcoden
 
         if param_set == None:
             self.separation_factor = 0.039
             self.alignment_factor = 0.5
             self.cohesion_factor = 0.002
-            self.turnfactor = 100
             self.visual_range = 25
         else:
             self.separation_factor = param_set[0]
             self.alignment_factor = param_set[1]
             self.cohesion_factor = param_set[2]
-            self.turnfactor = param_set[3]
-            self.visual_range = param_set[4]
+            self.visual_range = param_set[3]
+
+        if self.log_to_console:
+            print(f'parameters: {self.separation_factor},{self.alignment_factor},{self.cohesion_factor},{self.visual_range}')
 
         if self.render_screen: 
             self.init_graphics()
-
-    def run(self):
-        while self.run_for_ticks == None or self.tick < self.run_for_ticks: # ga oneindig door
-            self.update()
-            if self.render_screen:
-                self.render()
-        return self.nr_agents
-
+    
     def init_graphics(self):
         pygame.init()
         self.screen = pygame.display.set_mode(self.window)
@@ -59,22 +54,26 @@ class Simulation():
         self.clock = pygame.time.Clock()  # create pygame clock object 
         self.font = pygame.font.Font(None, 18)  # Create a font object
 
+    def run(self):
+        while   ((self.run_for_ticks == None or self.tick < self.run_for_ticks) 
+                and len(self.boids) > 0):
+            self.update()
+            if self.render_screen:
+                self.render()
+        return len(self.boids)
+
     def update(self):
         self.predator.uptate(self.window, 50, self.kdtree, self.boids)
-        self.nr_agents = len(self.boids)
+        if len(self.boids) == 0: # predator.uptate() kan boids verwijderen dus hier kunnen we pas checken of de lijst leeg is
+            return
         
-        if self.nr_agents == 0:
-            # alles weg
-            return self.tick
-        
-        self.kdtree = KDTree([[boid.x, boid.y] for boid in self.boids])            
-        
+        self.kdtree = KDTree([[boid.x, boid.y] for boid in self.boids])
         for boid in self.boids:
             boid.update(self.window, self.turnfactor, self.separation_factor, self.cohesion_factor, self.alignment_factor, self.kdtree, self.boids, self.visual_range, self.predator, self.predator.predation_detected)
         
         # logging
         if self.log_to_console and self.tick % 100 == 0:
-            print(f'tick {self.tick}: nr_boids={self.nr_agents}')
+            print(f'tick {self.tick}: nr_boids={len(self.boids)}')
         self.tick += 1
 
     def render(self):

@@ -27,10 +27,19 @@ class Boid():
             self.ax = turning_factor*(1/(self.x**2) - 1/((self.x - window[0])**2))
         if self.y != 0 and self.y != window[1]:
             self.ay = turning_factor*(1/(self.y**2) - 1/((self.y - window[1])**2))
+
         if self.x < 0 or self.x > window[0]:
             self.vx = -self.vx
         if self.y < 0 or self.y > window[1]:
             self.vy = -self.vy
+        
+        # dit kan in groepen misgaan?
+        # soms zitten de boids vast buiten het scherm, misschien omdat de turning_factor te laag is om ze binnen de lijnen te houden?
+        """if self.x < 0 and self.vx < 0:
+            self.vx = -self.vx
+        if self.x > window[0] and self.vx > 0:
+            self.vx = -self.vx"""
+        
 
     def separation(self, close_neighbours):
         self.close_dx, self.close_dy = 0, 0
