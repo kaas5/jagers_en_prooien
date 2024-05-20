@@ -15,7 +15,7 @@ def fitness(param_set):
 if __name__ == "__main__":
     window = (250, 250)
     margin =   420
-    nr_agents = 1
+    nr_agents = 3
     render_screen = True
     simulation = Simulation(window, margin, nr_agents, render_screen, run_for_ticks = 1000)
     simulation.run()
