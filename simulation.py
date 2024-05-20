@@ -12,12 +12,12 @@ class Simulation():
         self.window = window
         self.margin = margin
         self.nr_agents = nr_agents
-        self.render_screen = render_screen
+        self.render_screen = render_screen # voor als je de zooi wil zien op een scherm
         self.run_for_ticks = run_for_ticks
         
         self.draw_fps = True
         self.log_to_console = True
-        self.max_fps = 120 # werkt alleen als je de boel gaat renderen
+        self.max_fps = 20 # werkt alleen als je de boel gaat renderen
 
         self.boids =  [Boid(window,margin) for _ in range(nr_agents)]
         self.predator = Predator(window)
@@ -37,7 +37,7 @@ class Simulation():
             self.turnfactor = param_set[3]
             self.visual_range = param_set[4]
 
-        if render_screen: # voor als je de zooi wil zien op een scherm
+        if self.render_screen: 
             self.init_graphics()
 
     def run(self):

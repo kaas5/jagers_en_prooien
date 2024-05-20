@@ -3,7 +3,7 @@ import pygame
 
 class Predator():
 
-    def __init__(self, window):
+    def __init__(self, window, field_of_view=np.pi/2):
         # alles random
         self.x = np.random.uniform(0, window[0])
         self.y = np.random.uniform(0, window[1])
@@ -17,6 +17,7 @@ class Predator():
         self.eating = False
         self.eating_duration = 0
         self.max_eating_duration = 50
+        self.field_of_view = field_of_view
 
     def strat1(self, visual_indices, preys):
         closest_prey_index = min(visual_indices, key=lambda i: np.linalg.norm(np.array([preys[i].x, preys[i].y]) - np.array([self.x, self.y])))
@@ -53,23 +54,27 @@ class Predator():
         if len(visual_indices) != 0:
             self.predation_detected = True #If a prey is detected, the flag is set to True 
             # Find the closest prey
-            #closest_prey = self.strat1(visual_indices, preys)
-            closest_prey = self.strat3(visual_indices, preys)
+            selected_prey = self.strat1(visual_indices, preys)
+            #selected_prey = self.strat3(visual_indices, preys)
             
             # Compute the closest prey's direction
-            direction = np.arctan2(closest_prey.y - self.y, closest_prey.x - self.x)
+            direction = np.arctan2(selected_prey.y - self.y, selected_prey.x - self.x)
+            fov_angle = np.arctan2(self.vy, self.vx)
 
-            # Update the predator's speed
-            self.vx = speed_norm * np.cos(direction)
-            self.vy = speed_norm * np.sin(direction)
-
-            self.direction = direction
-            self.closest_prey = closest_prey
-
-            self.centroid = [closest_prey.x, closest_prey.y]
+            # we draaien de boel zodat je niet met de tipping point te maken hebt tussen -pi en pi
+            transform_direction = direction - fov_angle
+            if self.field_of_view / 2 > transform_direction and transform_direction > -self.field_of_view / 2:
+                # prooi is in fov
+                # Update the predator's speed
+                self.vx = speed_norm * np.cos(direction)
+                self.vy = speed_norm * np.sin(direction)
+                self.direction = direction
+                self.closest_prey = selected_prey
+                self.centroid = [selected_prey.x, selected_prey.y]
+            
             #If the prey is closed to the predator, the prey is eaten
-            if np.linalg.norm(np.array([self.x, self.y]) - np.array([closest_prey.x, closest_prey.y])) < 2:
-                preys.remove(closest_prey)
+            if np.linalg.norm(np.array([self.x, self.y]) - np.array([selected_prey.x, selected_prey.y])) < 2:
+                preys.remove(selected_prey)
                 self.eating = True
             
                     
