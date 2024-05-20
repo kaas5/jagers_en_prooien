@@ -24,6 +24,7 @@ class Predator():
         return preys[closest_prey_index]
 
     def strat3(self, visual_indices, preys):
+        # todo: rekening houden met visual_indices
         preys_x = list(p.x for p in preys)
         preys_y = list(p.y for p in preys)
         preys_in_range = np.array([preys_x, preys_y])
@@ -41,10 +42,28 @@ class Predator():
         max_distance_index = np.argmax(min_distance)
         return preys[max_distance_index]
 
+    def filter_indices_in_fov(self, visual_indices, preys):
+        filtered_visual_indices = []
+
+        for index in visual_indices:
+            prey = preys[index]
+            angle_to_prey = np.arctan2(prey.y - self.y, prey.x - self.x)
+            angle_fov = np.arctan2(self.vy, self.vx)
+
+            # we draaien de boel zodat je niet met de tipping point te maken hebt tussen -pi en pi, maakt de if statement overzichtelijk
+            angle_to_prey_transformed = angle_to_prey - angle_fov
+            if self.field_of_view / 2 > angle_to_prey_transformed and angle_to_prey_transformed > -self.field_of_view / 2:
+                filtered_visual_indices.append(index)
+
+        return filtered_visual_indices
+
     def tracking_behaviour(self, kdtree, preys):
         speed_norm = np.sqrt(self.vx**2 + self.vy**2)
         visual_indices = kdtree.query_ball_point((self.x, self.y), self.visual_predation)
         self.centroid = [self.x, self.y]
+
+        # hier al kijken of prey in fov zit!
+        visual_indices = self.filter_indices_in_fov(visual_indices, preys)
         
         if len(visual_indices) == 0 and self.predation_detected == True :
             # Any prey can't be seen, so the predator is randomly moving
@@ -53,24 +72,19 @@ class Predator():
 
         if len(visual_indices) != 0:
             self.predation_detected = True #If a prey is detected, the flag is set to True 
-            # Find the closest prey
+            # Use a strategy to find the prefered prey
             selected_prey = self.strat1(visual_indices, preys)
             #selected_prey = self.strat3(visual_indices, preys)
             
-            # Compute the closest prey's direction
-            direction = np.arctan2(selected_prey.y - self.y, selected_prey.x - self.x)
-            fov_angle = np.arctan2(self.vy, self.vx)
+            angle_to_prey = np.arctan2(selected_prey.y - self.y, selected_prey.x - self.x)
+            
+            # Update the predator's speed
+            self.vx = speed_norm * np.cos(angle_to_prey)
+            self.vy = speed_norm * np.sin(angle_to_prey)
+            self.direction = angle_to_prey
 
-            # we draaien de boel zodat je niet met de tipping point te maken hebt tussen -pi en pi
-            transform_direction = direction - fov_angle
-            if self.field_of_view / 2 > transform_direction and transform_direction > -self.field_of_view / 2:
-                # prooi is in fov
-                # Update the predator's speed
-                self.vx = speed_norm * np.cos(direction)
-                self.vy = speed_norm * np.sin(direction)
-                self.direction = direction
-                self.closest_prey = selected_prey
-                self.centroid = [selected_prey.x, selected_prey.y]
+            self.closest_prey = selected_prey
+            self.centroid = [selected_prey.x, selected_prey.y]
             
             #If the prey is closed to the predator, the prey is eaten
             if np.linalg.norm(np.array([self.x, self.y]) - np.array([selected_prey.x, selected_prey.y])) < 2:
