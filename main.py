@@ -43,12 +43,6 @@ def ea(population):
     print('de beste', population[index], scores[index])
 
 if __name__ == "__main__":
-    """window = (500, 500)
-    margin =   420
-    nr_agents = 50
-    render_screen = True
-    simulation = Simulation(window, margin, nr_agents, render_screen, run_for_ticks=None, max_fps=120)
-    simulation.run()"""
     population = init_population(50)
     ea(population)
     

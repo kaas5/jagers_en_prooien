@@ -22,7 +22,7 @@ class Predator():
 
     def strat1(self, visual_indices, preys):
         closest_prey_index = min(visual_indices, key=lambda i: np.linalg.norm(np.array([preys[i].x, preys[i].y]) - np.array([self.x, self.y])))
-        return preys[closest_prey_index], closest_prey_index
+        return preys[closest_prey_index]
 
     def strat3(self, visual_indices, preys):
         visual_preys = [preys[index] for index in visual_indices]
@@ -38,12 +38,11 @@ class Predator():
             accum.append(distances)
 
         # je wil de maximum van elke individuele minimum distance!!!
-        if len(accum) == 0: return visual_preys[0], visual_indices[0]
-
+        if len(accum) == 0: return visual_preys[0] # anders doet np.stack() moeilijk
         accum = np.stack(accum)
         min_distance = np.min(accum, axis=0)
         max_distance_index = np.argmax(min_distance)
-        return visual_preys[max_distance_index], visual_indices[max_distance_index]
+        return visual_preys[max_distance_index]
 
     def filter_indices_in_fov(self, visual_indices, preys):
         filtered_visual_indices = []
@@ -76,8 +75,8 @@ class Predator():
         if len(self.visual_indices) != 0:
             self.predation_detected = True #If a prey is detected, the flag is set to True 
             # Use a strategy to find the prefered prey
-            #selected_prey, selected_prey_index = self.strat1(visual_indices, preys)
-            selected_prey, selected_prey_index = self.strat3(self.visual_indices, preys)
+            #selected_prey = self.strat1(visual_indices, preys)
+            selected_prey = self.strat3(self.visual_indices, preys)
             
             angle_to_prey = np.arctan2(selected_prey.y - self.y, selected_prey.x - self.x)
             
@@ -92,7 +91,7 @@ class Predator():
             #If the prey is closed to the predator, the prey is eaten
             if np.linalg.norm(np.array([self.x, self.y]) - np.array([selected_prey.x, selected_prey.y])) < 5:
                 preys.remove(selected_prey)
-                self.visual_indices = [] # dit updaten voor 1 frame is erg veel gedoe, skippen we
+                self.visual_indices = [] # dit updaten voor 1 frame is erg veel gedoe aangezien de indices nu zijn verschoven, dus skippen we
                 self.eating = True
             
                     
