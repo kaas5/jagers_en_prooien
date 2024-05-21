@@ -6,9 +6,11 @@ import numpy as np
 from boids import Boid
 from scipy.spatial import KDTree
 from predator import Predator
+from obstacles import Obstacle
 
 class Simulation():
     def __init__(self, window, margin, nr_agents, render_screen, 
+                obstacle_positions=None, obstacle_radii=None,
                 run_for_ticks = None,
                 draw_fps = True,
                 log_to_console = True,
@@ -29,6 +31,13 @@ class Simulation():
         self.tick = 0 
 
         self.turnfactor = 100 # voor nu hardcoden
+
+        # Initialize obstacles
+        self.obstacles = []
+        if obstacle_positions is not None and obstacle_radii is not None:
+            for i in range(len(obstacle_positions)):
+                self.obstacles.append(Obstacle(obstacle_positions[i][0], obstacle_positions[i][1], obstacle_radii[i]))
+
 
         if param_set == None:
             self.separation_factor = 0.039
@@ -63,13 +72,14 @@ class Simulation():
         return len(self.boids)
 
     def update(self):
-        self.predator.uptate(self.window, 50, self.kdtree, self.boids)
+        self.predator.uptate(self.window, 50, self.kdtree, self.boids, self.obstacles)
         if len(self.boids) == 0: # predator.uptate() kan boids verwijderen dus hier kunnen we pas checken of de lijst leeg is
             return
         
         self.kdtree = KDTree([[boid.x, boid.y] for boid in self.boids])
         for boid in self.boids:
-            boid.update(self.window, self.turnfactor, self.separation_factor, self.cohesion_factor, self.alignment_factor, self.kdtree, self.boids, self.visual_range, self.predator, self.predator.predation_detected)
+            boid.update(self.window, self.turnfactor, self.separation_factor, self.cohesion_factor, self.alignment_factor, 
+                        self.kdtree, self.boids, self.visual_range, self.predator, self.predator.predation_detected, self.obstacles)
         
         # logging
         if self.log_to_console and self.tick % 100 == 0:
@@ -89,6 +99,9 @@ class Simulation():
         # nu drawen
         self.screen.fill((255, 255, 255))          
         
+        for obstacle in self.obstacles:
+            obstacle.draw(self.screen)
+
         for boid in self.boids:
             pygame.draw.polygon(self.screen, 'red', boid.draw_triangle())
             

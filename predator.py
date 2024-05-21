@@ -1,6 +1,8 @@
 import numpy as np
 import pygame
 
+from tools import NEIGHBORHOOD_RADIUS, Vector, getDistance, getDistanceSquared
+
 class Predator():
 
     def __init__(self, window, field_of_view=np.pi/2):
@@ -9,6 +11,9 @@ class Predator():
         self.y = np.random.uniform(0, window[1])
         self.vx = np.random.uniform(-1, 1)
         self.vy = np.random.uniform(-1, 1)
+
+        self.ax = 0.0
+        self.ay = 0.0
 
         self.visual_predation = 99999
         self.direction = np.arctan2(self.vy, self.vx)
@@ -75,7 +80,7 @@ class Predator():
         if len(self.visual_indices) != 0:
             self.predation_detected = True #If a prey is detected, the flag is set to True 
             # Use a strategy to find the prefered prey
-            #selected_prey = self.strat1(visual_indices, preys)
+            #selected_prey = self.strat1(self.visual_indices, preys)
             selected_prey = self.strat3(self.visual_indices, preys)
             
             angle_to_prey = np.arctan2(selected_prey.y - self.y, selected_prey.x - self.x)
@@ -95,15 +100,47 @@ class Predator():
                 self.eating = True
             
                     
-    def potential_repulsion(self, window, turning_factor):
+    def potential_repulsion(self, window, turning_factor, obstacles):
         if self.x != 0 and self.x != window[0]:
-            self.ax = turning_factor*(1/(self.x**2) - 1/((self.x - window[0])**2))
+            self.ax += turning_factor*(1/(self.x**2) - 1/((self.x - window[0])**2))
         if self.y != 0 and self.y != window[1]:
-            self.ay = turning_factor*(1/(self.y**2) - 1/((self.y - window[1])**2))
-        if self.x < 0 or self.x > window[0]:
-            self.vx = -self.vx
-        if self.y < 0 or self.y > window[1]:
-            self.vy = -self.vy
+            self.ay += turning_factor*(1/(self.y**2) - 1/((self.y - window[1])**2))
+
+        for obstacle in obstacles:
+            to_center = Vector(obstacle.x - self.x, obstacle.y - self.y)
+            distance = to_center.magnitude() - obstacle.radius 
+
+            # Calculate the direction of repulsion force
+            repulsion = Vector(self.x - obstacle.x, self.y - obstacle.y)
+            repulsion.normalize()
+
+            # de boid zit in de obstacle, zet m erbuiten
+            if distance < 0:
+                self.x += repulsion.x * (-distance + 1)
+                self.y += repulsion.y * (-distance + 1)
+                continue
+
+            if distance < obstacle.radius + 100:
+                # nu de 2 orthogonal vectoren pakken
+                v1 = Vector(repulsion.y, -repulsion.x)
+                v2 = Vector(-repulsion.y, repulsion.x)
+                heading = Vector(self.vx + self.ax, self.vy + self.ay)
+                # kijken welke het meeste op de huidige trajectory ligt
+                if getDistanceSquared(v1, heading) < getDistanceSquared(v2, heading):
+                    repulsion = v1
+                else:
+                    repulsion = v2
+
+                # dot product om te kijken of we op de obstacle af gaan of dat we er van weg bewegen
+                to_center.normalize()
+                heading.normalize()
+                dot = to_center.x * heading.x + to_center.y * heading.y
+                dot = max(0.0, dot)
+
+                # Calculate the magnitude of repulsion force
+                repulsion_magnitude = turning_factor * (1 / ((distance + 1) ** 2)) * dot
+                self.ax += repulsion.x * repulsion_magnitude
+                self.ay += repulsion.y * repulsion_magnitude
 
 
     def draw_triangle(self):
@@ -138,17 +175,19 @@ class Predator():
         if self.eating:
             self.vx, self.vy = 0,0
         
-    def uptate(self, window, turnfactor, kdtree, boids):
+    def uptate(self, window, turnfactor, kdtree, boids, obstacles):
+
+        self.ax = 0.0
+        self.ay = 0.0
 
         self.tracking_behaviour(kdtree, boids)
-        self.potential_repulsion(window, turnfactor)
+        self.potential_repulsion(window, turnfactor, obstacles)
         
         self.vx += self.ax
         self.vy += self.ay
+        self.speed_limit()
         self.x += self.vx
         self.y += self.vy
-
-        self.speed_limit()
 
         if self.eating:
             if self.eating_duration < self.max_eating_duration:

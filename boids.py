@@ -2,6 +2,8 @@ import numpy as np
 from predator import Predator
 import matplotlib.pyplot as plt
 
+from tools import NEIGHBORHOOD_RADIUS, Vector, getDistance, getDistanceSquared
+
 class Boid():
 
     def __init__(self, window, margin):
@@ -19,26 +21,48 @@ class Boid():
         
         self.stress = 0.0 #1.0 if the boid is stressed
 
+    def potential_repulsion(self, window, turning_factor, obstacles):
 
-
-
-    def potential_repulsion(self, window, turning_factor):
         if self.x != 0 and self.x != window[0]:
-            self.ax = turning_factor*(1/(self.x**2) - 1/((self.x - window[0])**2))
+            self.ax += turning_factor*(1/(self.x**2) - 1/((self.x - window[0])**2))
         if self.y != 0 and self.y != window[1]:
-            self.ay = turning_factor*(1/(self.y**2) - 1/((self.y - window[1])**2))
+            self.ay += turning_factor*(1/(self.y**2) - 1/((self.y - window[1])**2))
 
-        if self.x < 0 or self.x > window[0]:
-            self.vx = -self.vx
-        if self.y < 0 or self.y > window[1]:
-            self.vy = -self.vy
-        
-        # dit kan in groepen misgaan?
-        # soms zitten de boids vast buiten het scherm, misschien omdat de turning_factor te laag is om ze binnen de lijnen te houden?
-        """if self.x < 0 and self.vx < 0:
-            self.vx = -self.vx
-        if self.x > window[0] and self.vx > 0:
-            self.vx = -self.vx"""
+        for obstacle in obstacles:
+            to_center = Vector(obstacle.x - self.x, obstacle.y - self.y)
+            distance = to_center.magnitude() - obstacle.radius 
+
+            # Calculate the direction of repulsion force
+            repulsion = Vector(self.x - obstacle.x, self.y - obstacle.y)
+            repulsion.normalize()
+
+            # de boid zit in de obstacle, zet m erbuiten
+            if distance < 0:
+                self.x += repulsion.x * (-distance + 1)
+                self.y += repulsion.y * (-distance + 1)
+                continue
+
+            if distance < obstacle.radius + 100:
+                # nu de 2 orthogonal vectoren pakken
+                v1 = Vector(repulsion.y, -repulsion.x)
+                v2 = Vector(-repulsion.y, repulsion.x)
+                heading = Vector(self.vx + self.ax, self.vy + self.ay)
+                # kijken welke het meeste op de huidige trajectory ligt
+                if getDistanceSquared(v1, heading) < getDistanceSquared(v2, heading):
+                    repulsion = v1
+                else:
+                    repulsion = v2
+
+                # dot product om te kijken of we op de obstacle af gaan of dat we er van weg bewegen
+                to_center.normalize()
+                heading.normalize()
+                dot = to_center.x * heading.x + to_center.y * heading.y
+                dot = max(0.0, dot)
+
+                # Calculate the magnitude of repulsion force
+                repulsion_magnitude = turning_factor * (1 / ((distance + 1) ** 2)) * dot
+                self.ax += repulsion.x * repulsion_magnitude
+                self.ay += repulsion.y * repulsion_magnitude
         
 
     def separation(self, close_neighbours):
@@ -127,7 +151,7 @@ class Boid():
     def speed_limit(self):
 
         if self.stress != 0.0:
-            v_max = 1.32 * self.stress #Based on the Impala's max speed, and scale calculations from the lenght of an impala.    
+            v_max = 1.6 * self.stress #Based on the Impala's max speed, and scale calculations from the lenght of an impala.    
             v_min = 0.1 * self.stress
         else:
             v_max = 0.1
@@ -158,14 +182,17 @@ class Boid():
         rotated_triangle = np.dot(triangle, rotation_matrix.T) + center
         return [(int(point[0]), int(point[1])) for point in rotated_triangle]
 
-    def update(self, window, turning_factor, separation_factor, cohesion_factor, alignment_factor,kd_tree, boids, visual_range, predator, predation_detected):
+    def update(self, window, turning_factor, separation_factor, cohesion_factor, alignment_factor,kd_tree, boids, visual_range, predator, predation_detected, obstacles):
         
         # This line keep the cohesion at the beginning of the simulation to have a herd
         if predation_detected == False:
             cohesion_factor = 0.013
 
+        self.ax = 0.0
+        self.ay = 0.0
+
         #Mandatory, the edges of the simulator should be always active
-        self.potential_repulsion(window, turning_factor)
+        self.potential_repulsion(window, turning_factor, obstacles)
 
         #Close neighbours ()
         close_indices = kd_tree.query_ball_point((self.x, self.y), 15)
@@ -191,10 +218,13 @@ class Boid():
         #Predator interaction
         self.predator_interaction(predator)
 
-        self.x += self.vx
-        self.y += self.vy
+        
         self.vx += self.ax
         self.vy += self.ay
+        #Finally we applied a speed limit to prevent the animals from going faster than the speed of light
+        self.speed_limit()
+        self.x += self.vx
+        self.y += self.vy
 
         '''
             STRESS BEHAVIOUR
@@ -211,7 +241,5 @@ class Boid():
             self.vx_prev = self.vx
             self.vy_prev = self.vy
         
-        #Finally we applied a speed limit to prevent the animals from going faster than the speed of light
-        self.speed_limit()
 
         
