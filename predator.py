@@ -25,6 +25,10 @@ class Predator():
         self.field_of_view = field_of_view
         self.visual_indices = []
 
+        self.target_prey = None
+        self.max_target_timeout = 100
+        self.target_timeout = 0
+
     def strat1(self, visual_indices, preys):
         closest_prey_index = min(visual_indices, key=lambda i: np.linalg.norm(np.array([preys[i].x, preys[i].y]) - np.array([self.x, self.y])))
         return preys[closest_prey_index]
@@ -79,23 +83,37 @@ class Predator():
 
         if len(self.visual_indices) != 0:
             self.predation_detected = True #If a prey is detected, the flag is set to True 
+            
+            
             # Use a strategy to find the prefered prey
             #selected_prey = self.strat1(self.visual_indices, preys)
             selected_prey = self.strat3(self.visual_indices, preys)
+
+
+            if selected_prey != self.target_prey and self.target_prey is not None:
+                self.target_timeout += 1
+                if self.target_timeout > self.max_target_timeout:
+                    # nu mag je wisselen
+                    self.target_prey = selected_prey
+                    self.target_timeout = 0
+            else:
+                self.target_prey = selected_prey
+                self.target_timeout = 0
             
-            angle_to_prey = np.arctan2(selected_prey.y - self.y, selected_prey.x - self.x)
+            angle_to_prey = np.arctan2(self.target_prey.y - self.y, self.target_prey.x - self.x)
             
             # Update the predator's speed
             self.vx = speed_norm * np.cos(angle_to_prey)
             self.vy = speed_norm * np.sin(angle_to_prey)
             self.direction = angle_to_prey
 
-            self.closest_prey = selected_prey
-            self.centroid = [selected_prey.x, selected_prey.y]
+            self.closest_prey = self.target_prey
+            self.centroid = [self.target_prey.x, self.target_prey.y]
             
             #If the prey is closed to the predator, the prey is eaten
-            if np.linalg.norm(np.array([self.x, self.y]) - np.array([selected_prey.x, selected_prey.y])) < 5:
-                preys.remove(selected_prey)
+            if np.linalg.norm(np.array([self.x, self.y]) - np.array([self.target_prey.x, self.target_prey.y])) < 5:
+                preys.remove(self.target_prey)
+                self.target_prey = None
                 self.visual_indices = [] # dit updaten voor 1 frame is erg veel gedoe aangezien de indices nu zijn verschoven, dus skippen we
                 self.eating = True
             
