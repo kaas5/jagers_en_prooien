@@ -12,8 +12,8 @@ class Boid():
         self.x, self.y = (
             window[0]//2 + int(r * np.cos(angle)),
             window[0]//2 + int(r * np.sin(angle)))
-        self.vx = 0.0
-        self.vy = 0.0
+        self.vx = np.random.uniform(-1, 1)
+        self.vy = np.random.uniform(-1, 1)
         self.vx_prev = 0
         self.vy_prev = 0
         self.ax = 0
@@ -21,7 +21,7 @@ class Boid():
         
         self.stress = 0.0 #1.0 if the boid is stressed
         
-        self.predator_interaction_radius = 200
+        self.predator_interaction_radius = 40
         self.field_of_view = np.pi / 2
 
     def potential_repulsion(self, window, turning_factor, obstacles):
@@ -108,9 +108,8 @@ class Boid():
             if boid.stress != 0.0:
                 if boid.stress > self.stress:
                     self.stress = boid.stress
-                else:
-                    self.stress = self.stress - boid.stress/1000
-
+                #else:
+                #    self.stress = self.stress - 1/200#- boid.stress/1000
 
             vx_avg += boid.vx
             vy_avg += boid.vy
@@ -123,14 +122,14 @@ class Boid():
         return np.array((vx_avg, vy_avg))
     
     def random_vector(self):
-        random_factor = 0.1
+        random_factor = 0.02
         ax = np.random.uniform(-random_factor, random_factor)
         ay = np.random.uniform(-random_factor, random_factor)
         return np.array((ax, ay))
     
     def predator_interaction(self, predator):
-
-        if self.is_predator_in_fov(predator):
+        #print(self.stress)
+        if self.is_predator_in_fov(predator) or self.stress > 0.0:
 
             predator_dx = predator.x - self.x #Positif si au dessus
             predator_dy = predator.y - self.y #Positif si à droite
@@ -150,29 +149,23 @@ class Boid():
                 if predator_dx < 0:  # predator right of boid
                     self.vx += predatorturnfactor
 
-        else: #The prey doesn't see the predator anymore, it starts to destress and the stress is a linear function, maybe it could be great to find a paper about it ? 
-            self.stress = self.stress - 1/3000 #It should take 30 seconds to distess
-            if self.stress < 0.0:
-                self.stress = 0.0
+        #else: #The prey doesn't see the predator anymore, it starts to destress and the stress is a linear function, maybe it could be great to find a paper about it ? 
+        self.stress = self.stress - 1/500 #It should take 30 seconds to distess
+        if self.stress < 0.0:
+            self.stress = 0.0
 
 
-    def speed_limit(self):
-
-        if self.stress != 0.0:
-            v_max = 1.6 * self.stress #Based on the Impala's max speed, and scale calculations from the lenght of an impala.    
-            v_min = 0.1 * self.stress
-        else:
-            v_max = 0.1
-            v_min = 0.0
-
-        vel_norm = np.sqrt(self.vx**2 + self.vy**2)        
-        
-        if vel_norm > v_max:
-            self.vx = (self.vx/vel_norm)*v_max
-            self.vy = (self.vy/vel_norm)*v_max
-        if vel_norm < v_min:
-            self.vx = (self.vx/vel_norm)*v_min
-            self.vy = (self.vy/vel_norm)*v_min
+    def speed_limit(self):        
+        velocity_length = np.sqrt(self.vx**2 + self.vy**2)
+        v_min = 1.0
+        v_max = 1.6
+        hier = v_min + self.stress * (v_max - v_min)
+        if velocity_length > hier:
+            self.vx = (self.vx/velocity_length)*hier
+            self.vy = (self.vy/velocity_length)*hier
+        if velocity_length < v_min:
+            self.vx = (self.vx/velocity_length)*v_min
+            self.vy = (self.vy/velocity_length)*v_min        
 
     def draw_triangle(self):
         center = (self.x, self.y)
@@ -226,7 +219,6 @@ class Boid():
         #Predator interaction
         self.predator_interaction(predator)
 
-        
         self.vx += self.ax
         self.vy += self.ay
         #Finally we applied a speed limit to prevent the animals from going faster than the speed of light
@@ -241,13 +233,14 @@ class Boid():
             Keep in Mind that the low pass filter introduce a slight delay before the animals start moving
         '''
         
+        '''
         alpha = 0.1
         
         if self.stress <= 0.2: 
             self.vx = alpha * self.vx + (1-alpha)*self.vx_prev
             self.vy = alpha * self.vy + (1-alpha)*self.vy_prev
             self.vx_prev = self.vx
-            self.vy_prev = self.vy
+            self.vy_prev = self.vy'''
         
 
         
