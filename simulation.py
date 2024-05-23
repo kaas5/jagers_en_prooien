@@ -121,6 +121,8 @@ class Simulation():
             fps = int(self.clock.get_fps())
             text_2 = self.font.render(f'fps: {fps}', True, (0, 0, 0))
             self.screen.blit(text_2, (5, 5))
+            text = self.font.render(f'number of preys remaining: {len(self.boids)}', True, (0, 0, 0))
+            self.screen.blit(text, (5, 15))
 
         pygame.display.update()
         

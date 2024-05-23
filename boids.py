@@ -20,6 +20,9 @@ class Boid():
         self.ay = 0
         
         self.stress = 0.0 #1.0 if the boid is stressed
+        
+        self.predator_interaction_radius = 200
+        self.field_of_view = np.pi / 2
 
     def potential_repulsion(self, window, turning_factor, obstacles):
 
@@ -64,6 +67,13 @@ class Boid():
                 self.ax += repulsion.x * repulsion_magnitude
                 self.ay += repulsion.y * repulsion_magnitude
         
+    def is_predator_in_fov(self, predator):
+        angle_to_prey = np.arctan2(predator.y - self.y, predator.x - self.x)
+        angle_fov = np.arctan2(self.vy, self.vx)
+
+        # we draaien de boel zodat je niet met de tipping point te maken hebt tussen -pi en pi, maakt de if statement overzichtelijk
+        angle_to_prey_transformed = angle_to_prey - angle_fov
+        return self.field_of_view / 2 > angle_to_prey_transformed and angle_to_prey_transformed > -self.field_of_view / 2
 
     def separation(self, close_neighbours):
         self.close_dx, self.close_dy = 0, 0
@@ -120,27 +130,25 @@ class Boid():
     
     def predator_interaction(self, predator):
 
-        predator_dx = predator.x - self.x #Positif si au dessus
-        predator_dy = predator.y - self.y #Positif si à droite
+        if self.is_predator_in_fov(predator):
 
-        predator_dist = np.sqrt(predator_dx**2 + predator_dy**2)
-        predatorturnfactor = 0.2
+            predator_dx = predator.x - self.x #Positif si au dessus
+            predator_dy = predator.y - self.y #Positif si à droite
 
-        if predator_dist < 40 : 
+            predator_dist = np.sqrt(predator_dx**2 + predator_dy**2)
+            predatorturnfactor = 0.2
 
-            self.stress = 1.0    #If the boid can see the predator, it is fully stress
+            if predator_dist < self.predator_interaction_radius: 
 
-            if predator_dy > 0:  # predator above boid
-                self.vy -= predatorturnfactor
-
-            if predator_dy < 0:  # predator below boid
-                self.vy += predatorturnfactor
-
-            if predator_dx > 0:  # predator left of boid
-                self.vx -= predatorturnfactor
-
-            if predator_dx < 0:  # predator right of boid
-                self.vx += predatorturnfactor
+                self.stress = 1.0    #If the boid can see the predator, it is fully stress
+                if predator_dy > 0:  # predator above boid
+                    self.vy -= predatorturnfactor
+                if predator_dy < 0:  # predator below boid
+                    self.vy += predatorturnfactor
+                if predator_dx > 0:  # predator left of boid
+                    self.vx -= predatorturnfactor
+                if predator_dx < 0:  # predator right of boid
+                    self.vx += predatorturnfactor
 
         else: #The prey doesn't see the predator anymore, it starts to destress and the stress is a linear function, maybe it could be great to find a paper about it ? 
             self.stress = self.stress - 1/3000 #It should take 30 seconds to distess

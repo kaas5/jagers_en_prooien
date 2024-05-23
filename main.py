@@ -11,7 +11,7 @@ population = []
 if __name__ == "__main__":
     window = (500, 500)
     margin =   420
-    nr_agents = 200
+    nr_agents = 20
     render_screen = True
     log_to_console = False
     run_for_ticks = None
