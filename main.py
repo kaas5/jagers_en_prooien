@@ -11,20 +11,20 @@ population = []
 if __name__ == "__main__":
     window = (500, 500)
     margin =   420
-    nr_agents = 20
+    nr_agents = 200
     render_screen = True
     log_to_console = False
     run_for_ticks = None
     max_fps=120
     
-    obstacle_positions = [(250, 250)]#[(200, 200), (100, 400), (400, 400), (400, 100)]  # Obstacle positions
-    obstacle_radii = [200]#[50, 50, 50, 50]  # Obstacle radii
+    #obstacle_positions = [(250, 250)]#[(200, 200), (100, 400), (400, 400), (400, 100)]  # Obstacle positions
+    #obstacle_radii = [200]#[50, 50, 50, 50]  # Obstacle radii
 
-    #obstacle_positions = [(200, 200), (100, 400), (400, 400), (400, 100)]  # Obstacle positions
-    #obstacle_radii = [50, 50, 50, 50]  # Obstacle radii
+    obstacle_positions = [(200, 200), (100, 400), (400, 400), (400, 100)]  # Obstacle positions
+    obstacle_radii = [50, 50, 50, 50]  # Obstacle radii
 
     simulation = Simulation(window, margin, nr_agents, render_screen, 
-                            obstacle_positions=obstacle_positions, obstacle_radii=obstacle_radii,
+                            obstacle_positions=obstacle_positions, obstacle_radii=obstacle_radii, take_screenshots=True,
                             run_for_ticks = run_for_ticks, param_set = None, max_fps=max_fps, log_to_console=log_to_console)
     simulation.run()
 

@@ -26,7 +26,7 @@ class Predator():
         self.visual_indices = []
 
         self.target_prey = None
-        self.max_target_timeout = 100
+        self.max_target_timeout = 0
         self.target_timeout = 0
 
     def strat1(self, visual_indices, preys):
@@ -86,8 +86,8 @@ class Predator():
             
             
             # Use a strategy to find the prefered prey
-            #selected_prey = self.strat1(self.visual_indices, preys)
-            selected_prey = self.strat3(self.visual_indices, preys)
+            selected_prey = self.strat1(self.visual_indices, preys)
+            #selected_prey = self.strat3(self.visual_indices, preys)
 
 
             if selected_prey != self.target_prey and self.target_prey is not None:

@@ -3,6 +3,8 @@ import pygame
 from pygame_widgets.slider import Slider
 from pygame_widgets.textbox import TextBox
 import numpy as np
+import pyautogui
+import time
 from boids import Boid
 from scipy.spatial import KDTree
 from predator import Predator
@@ -15,10 +17,12 @@ class Simulation():
                 draw_fps = True,
                 log_to_console = True,
                 max_fps = 60,
+                take_screenshots = False,
                 param_set = None):
         self.window = window
         self.margin = margin
         self.render_screen = render_screen # voor als je de zooi wil zien op een scherm
+        self.take_screenshots = take_screenshots
         self.run_for_ticks = run_for_ticks
         
         self.draw_fps = draw_fps
@@ -29,6 +33,8 @@ class Simulation():
         self.predator = Predator(window, field_of_view=np.pi/2)
         self.kdtree = KDTree([[boid.x, boid.y] for boid in self.boids])
         self.tick = 0 
+        self.time_between_screenshots = 300
+        self.screenshot_counter = 0
 
         self.turnfactor = 100 # voor nu hardcoden
 
@@ -118,5 +124,13 @@ class Simulation():
 
         pygame.display.update()
         
+        if self.take_screenshots:
+            self.screenshot_counter += 1
+            if self.screenshot_counter % self.time_between_screenshots == 0:
+                self.screenshot()
+
         self.clock.tick(self.max_fps) # voor het regelen van fps
 
+    def screenshot(self):
+        screenshot = pyautogui.screenshot()
+        screenshot.save("screenshot_" + str(int(time.time())) + ".png")
