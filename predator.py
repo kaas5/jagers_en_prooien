@@ -26,7 +26,7 @@ class Predator():
         self.visual_indices = []
 
         self.target_prey = None
-        self.max_target_timeout = 0
+        self.max_target_timeout = 100
         self.target_timeout = 0
 
     def strat1(self, visual_indices, preys):
