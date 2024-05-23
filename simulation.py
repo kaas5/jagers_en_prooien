@@ -29,7 +29,7 @@ class Simulation():
         self.log_to_console = log_to_console
         self.max_fps = max_fps # werkt alleen als je de boel gaat renderen
 
-        self.boids =  [Boid(window,margin) for _ in range(nr_agents)]
+        self.boids =  [Boid(window, margin, field_of_view=np.pi, visual_range=20) for _ in range(nr_agents)]
         self.predator = Predator(window, field_of_view=np.pi/2)
         self.kdtree = KDTree([[boid.x, boid.y] for boid in self.boids])
         self.tick = 0 
@@ -46,12 +46,11 @@ class Simulation():
             for i in range(len(obstacle_positions)):
                 self.obstacles.append(Obstacle(obstacle_positions[i][0], obstacle_positions[i][1], obstacle_radii[i]))
 
-
         if param_set == None:
             self.separation_factor = 0.039
             self.alignment_factor = 0.5
-            self.cohesion_factor = 0.002
-            self.visual_range = 25
+            self.cohesion_factor = 0.025
+            self.visual_range = 50
         else:
             self.separation_factor = param_set[0]
             self.alignment_factor = param_set[1]
@@ -80,18 +79,17 @@ class Simulation():
         return len(self.boids)
 
     def update(self):
-        self.predator.uptate(self.window, 50, self.kdtree, self.boids, self.obstacles)
-        
-        if len(self.boids) == 0: # predator.uptate() kan boids verwijderen dus hier kunnen we pas checken of de lijst leeg is
-            return
         
         ttu = time.time()
         self.kdtree = KDTree([[boid.x, boid.y] for boid in self.boids])
         for boid in self.boids:
             boid.update(self.window, self.turnfactor, self.separation_factor, self.cohesion_factor, self.alignment_factor, 
-                        self.kdtree, self.boids, self.visual_range, self.predator, self.predator.predation_detected, self.obstacles)
+                        self.kdtree, self.boids, self.predator, self.obstacles)
 
-        self.ttu += time.time() - ttu
+        self.predator.uptate(self.window, 50, self.kdtree, self.boids, self.obstacles)
+        if len(self.boids) == 0: # predator.uptate() kan boids verwijderen dus hier kunnen we pas checken of de lijst leeg is
+            return
+
         # logging
         if self.log_to_console and self.tick % 100 == 0:
             print(f'tick {self.tick}: nr_boids={len(self.boids)}, avg ttu/ttr={self.ttu / 100}, {self.ttr / 100}')
@@ -99,6 +97,7 @@ class Simulation():
             self.ttr = 0
 
         self.tick += 1
+        self.ttu += time.time() - ttu
 
     def render(self):
         ttr = time.time()

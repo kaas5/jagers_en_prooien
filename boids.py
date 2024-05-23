@@ -6,7 +6,7 @@ from tools import NEIGHBORHOOD_RADIUS, Vector, getDistance, getDistanceSquared
 
 class Boid():
 
-    def __init__(self, window, margin):
+    def __init__(self, window, margin, field_of_view = np.pi / 2, visual_range = 40):
         angle = np.random.uniform(0, 2 * np.pi)
         r = np.random.randint(0, (margin)*0.2)
         self.x, self.y = (
@@ -21,8 +21,8 @@ class Boid():
         
         self.stress = 0.0 #1.0 if the boid is stressed
         
-        self.predator_interaction_radius = 40
-        self.field_of_view = np.pi / 2
+        self.visual_range = visual_range
+        self.field_of_view = field_of_view
 
     def potential_repulsion(self, window, turning_factor, obstacles):
 
@@ -127,7 +127,7 @@ class Boid():
             predator_dist = predator_dx**2 + predator_dy**2
             predatorturnfactor = 0.2
 
-            if predator_dist < self.predator_interaction_radius**2: 
+            if predator_dist < self.visual_range**2: 
 
                 self.stress = 1.0    #If the boid can see the predator, it is fully stress
                 if predator_dy > 0:  # predator above boid
@@ -173,11 +173,11 @@ class Boid():
         rotated_triangle = np.dot(triangle, rotation_matrix.T) + center
         return [(int(point[0]), int(point[1])) for point in rotated_triangle]
 
-    def update(self, window, turning_factor, separation_factor, cohesion_factor, alignment_factor,kd_tree, boids, visual_range, predator, predation_detected, obstacles):
+    def update(self, window, turning_factor, separation_factor, cohesion_factor, alignment_factor,kd_tree, boids, predator, obstacles):
         
         # This line keep the cohesion at the beginning of the simulation to have a herd
-        if predation_detected == False:
-            cohesion_factor = 0.013
+        #if predation_detected == False:
+        #    cohesion_factor = 0.013
 
         self.ax = 0.0
         self.ay = 0.0
@@ -190,7 +190,7 @@ class Boid():
         #close_neighbours = [boids[i] for i in close_indices]
         
         # We determine the visual neighbours
-        visual_indices = kd_tree.query_ball_point((self.x, self.y), visual_range)
+        visual_indices = kd_tree.query_ball_point((self.x, self.y), self.visual_range)
         visual_neighbours = [boids[i] for i in visual_indices]
 
         # Flocking Behaviour in general
@@ -221,21 +221,6 @@ class Boid():
         self.x += self.vx
         self.y += self.vy
 
-        '''
-            STRESS BEHAVIOUR
-
-            Low pass filter to make the animals moving smoothlys in the case that they are chilling
-            Keep in Mind that the low pass filter introduce a slight delay before the animals start moving
-        '''
-        
-        '''
-        alpha = 0.1
-        
-        if self.stress <= 0.2: 
-            self.vx = alpha * self.vx + (1-alpha)*self.vx_prev
-            self.vy = alpha * self.vy + (1-alpha)*self.vy_prev
-            self.vx_prev = self.vx
-            self.vy_prev = self.vy'''
         
 
         
