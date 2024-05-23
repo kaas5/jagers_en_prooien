@@ -76,16 +76,15 @@ class Boid():
         return self.field_of_view / 2 > angle_to_prey_transformed and angle_to_prey_transformed > -self.field_of_view / 2
 
     def separation(self, close_neighbours):
-        self.close_dx, self.close_dy = 0, 0
+        close_dx, close_dy = 0, 0
         total_close = 0
         for boid in close_neighbours:
-            self.close_dx +=  - boid.x + self.x
-            self.close_dy += - boid.y + self.y
+            close_dx +=  - boid.x + self.x
+            close_dy += - boid.y + self.y
             total_close += 1
         if total_close == 0:
-            return np.array((0, 0))
-        
-        return np.array((self.close_dx, self.close_dy))/total_close
+            return (0,0)
+        return (close_dx / total_close, close_dy / total_close)
     
     def cohesion(self, visual_neighbours):
         x_avg, y_avg, total = 0, 0, 0
@@ -94,12 +93,11 @@ class Boid():
             y_avg += boid.y
             total += 1
         if total > 0:
-        
             x_avg /= total
             y_avg /= total
         else :
-            return np.array((0, 0))
-        return np.array((x_avg - self.x, y_avg - self.y))
+            return (0, 0)
+        return (x_avg - self.x, y_avg - self.y)
     
     def alignment(self, visual_neighbours):
         vx_avg, vy_avg, total = 0, 0, 0
@@ -110,7 +108,6 @@ class Boid():
                     self.stress = boid.stress
                 #else:
                 #    self.stress = self.stress - 1/200#- boid.stress/1000
-
             vx_avg += boid.vx
             vy_avg += boid.vy
             total += 1
@@ -118,26 +115,19 @@ class Boid():
             vx_avg /= total
             vy_avg /= total
         else :
-            return np.array((0, 0))
-        return np.array((vx_avg, vy_avg))
-    
-    def random_vector(self):
-        random_factor = 0.02
-        ax = np.random.uniform(-random_factor, random_factor)
-        ay = np.random.uniform(-random_factor, random_factor)
-        return np.array((ax, ay))
+            return (0, 0)
+        return (vx_avg, vy_avg)
     
     def predator_interaction(self, predator):
-        #print(self.stress)
         if self.is_predator_in_fov(predator) or self.stress > 0.0:
 
             predator_dx = predator.x - self.x #Positif si au dessus
             predator_dy = predator.y - self.y #Positif si à droite
 
-            predator_dist = np.sqrt(predator_dx**2 + predator_dy**2)
+            predator_dist = predator_dx**2 + predator_dy**2
             predatorturnfactor = 0.2
 
-            if predator_dist < self.predator_interaction_radius: 
+            if predator_dist < self.predator_interaction_radius**2: 
 
                 self.stress = 1.0    #If the boid can see the predator, it is fully stress
                 if predator_dy > 0:  # predator above boid
@@ -196,25 +186,30 @@ class Boid():
         self.potential_repulsion(window, turning_factor, obstacles)
 
         #Close neighbours ()
-        close_indices = kd_tree.query_ball_point((self.x, self.y), 15)
-        close_neighbours = [boids[i] for i in close_indices]
-
-        # Flocking Behaviour in general
-        self.ax += separation_factor * self.separation(close_neighbours)[0]
-        self.ay += separation_factor * self.separation(close_neighbours)[1]
+        #close_indices = kd_tree.query_ball_point((self.x, self.y), 15)
+        #close_neighbours = [boids[i] for i in close_indices]
+        
         # We determine the visual neighbours
         visual_indices = kd_tree.query_ball_point((self.x, self.y), visual_range)
         visual_neighbours = [boids[i] for i in visual_indices]
 
+        # Flocking Behaviour in general
+        s = self.separation(visual_neighbours)
+        self.ax += separation_factor * s[0]
+        self.ay += separation_factor * s[1]
+
         # Cohesion and alignment
-        self.ax += cohesion_factor * self.cohesion(visual_neighbours)[0]
-        self.ay += cohesion_factor * self.cohesion(visual_neighbours)[1]
+        c = self.cohesion(visual_neighbours)
+        self.ax += cohesion_factor * c[0]
+        self.ay += cohesion_factor * c[1]
 
-        self.ax += alignment_factor * self.alignment(visual_neighbours)[0]
-        self.ay += alignment_factor * self.alignment(visual_neighbours)[1]
-
-        self.ax = self.ax + self.random_vector()[0]
-        self.ay = self.ay + self.random_vector()[1]
+        a = self.alignment(visual_neighbours)
+        self.ax += alignment_factor * a[0]
+        self.ay += alignment_factor * a[1]
+    
+        random_factor = 0.02
+        self.ax += np.random.uniform(-random_factor, random_factor)
+        self.ay += np.random.uniform(-random_factor, random_factor)
 
         #Predator interaction
         self.predator_interaction(predator)

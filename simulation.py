@@ -37,6 +37,8 @@ class Simulation():
         self.screenshot_counter = 0
 
         self.turnfactor = 100 # voor nu hardcoden
+        self.ttu = 0
+        self.ttr = 0
 
         # Initialize obstacles
         self.obstacles = []
@@ -79,20 +81,27 @@ class Simulation():
 
     def update(self):
         self.predator.uptate(self.window, 50, self.kdtree, self.boids, self.obstacles)
+        
         if len(self.boids) == 0: # predator.uptate() kan boids verwijderen dus hier kunnen we pas checken of de lijst leeg is
             return
         
+        ttu = time.time()
         self.kdtree = KDTree([[boid.x, boid.y] for boid in self.boids])
         for boid in self.boids:
             boid.update(self.window, self.turnfactor, self.separation_factor, self.cohesion_factor, self.alignment_factor, 
                         self.kdtree, self.boids, self.visual_range, self.predator, self.predator.predation_detected, self.obstacles)
-        
+
+        self.ttu += time.time() - ttu
         # logging
         if self.log_to_console and self.tick % 100 == 0:
-            print(f'tick {self.tick}: nr_boids={len(self.boids)}')
+            print(f'tick {self.tick}: nr_boids={len(self.boids)}, avg ttu/ttr={self.ttu / 100}, {self.ttr / 100}')
+            self.ttu = 0
+            self.ttr = 0
+
         self.tick += 1
 
     def render(self):
+        ttr = time.time()
         # begin mooie spaghetti hehe
         events = pygame.event.get()
         for events in pygame.event.get():
@@ -132,6 +141,7 @@ class Simulation():
                 self.screenshot()
 
         self.clock.tick(self.max_fps) # voor het regelen van fps
+        self.ttr += time.time() - ttr
 
     def screenshot(self):
         screenshot = pyautogui.screenshot()
