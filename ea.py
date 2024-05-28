@@ -48,21 +48,22 @@ class EA:
         return offspring
     
     @staticmethod
-    def mutate(offspring, mutation_rate=0.01):
+    def mutate(offspring, mutation_rate=0.2):
         for individual in offspring:
             for i in range(len(individual)):
                 if random.random() < mutation_rate:
+                    print('mutatie')
                     if i < 3:
-                        individual[i] += random.uniform(-0.1, 0.1)
+                        individual[i] += random.uniform(-0.1, 0.1) #
                         individual[i] = max(0, min(1, individual[i]))
                     else:
-                        individual[i] += random.uniform(-10, 10)
+                        individual[i] += random.uniform(-10, 10) # 
                         individual[i] = max(0, min(100, individual[i]))
         return offspring
 
     @staticmethod
-    def ea(nr_agents, generations, selection):
-        population = EA.init_population(nr_agents)
+    def ea(population_size, generations, selection):
+        population = EA.init_population(population_size)
         best_params = None
         best_score = float('-inf')
 
@@ -81,7 +82,7 @@ class EA:
                 best_params = best_generation_params
 
             best_individuals = EA.select_parents(population, scores, selection)
-            offspring_size = nr_agents - selection
+            offspring_size = population_size - selection
             offspring = EA.crossover(best_individuals, offspring_size)
             offspring = EA.mutate(offspring)
             population = best_individuals + offspring
