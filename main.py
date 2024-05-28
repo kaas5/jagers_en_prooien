@@ -16,7 +16,7 @@ if __name__ == "__main__":
     take_screenshots = False
     log_to_console = True
     run_for_ticks = None
-    max_fps=60
+    max_fps=120
     
     #obstacle_positions = [(250, 250)]#[(200, 200), (100, 400), (400, 400), (400, 100)]  # Obstacle positions
     #obstacle_radii = [200]#[50, 50, 50, 50]  # Obstacle radii
