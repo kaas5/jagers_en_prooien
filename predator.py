@@ -1,7 +1,7 @@
 import numpy as np
 import pygame
 
-from tools import NEIGHBORHOOD_RADIUS, Vector, getDistance, getDistanceSquared
+from tools import NEIGHBORHOOD_RADIUS, Vector, getDistance, getDistanceSquared, dot
 
 class Predator():
 
@@ -23,6 +23,7 @@ class Predator():
         self.eating_duration = 0
         self.max_eating_duration = 50
         self.field_of_view = field_of_view
+        self.dot_from_angle = dot(Vector(np.cos(self.field_of_view / 2), np.sin(self.field_of_view / 2)), Vector(1,0))
         self.visual_indices = []
 
         self.target_prey = None
@@ -77,14 +78,13 @@ class Predator():
     def filter_indices_in_fov(self, visual_indices, preys):
         filtered_visual_indices = []
 
-        for index in visual_indices:
+        for index in visual_indices:            
             prey = preys[index]
-            angle_to_prey = np.arctan2(prey.y - self.y, prey.x - self.x)
-            angle_fov = np.arctan2(self.vy, self.vx)
-
-            # we draaien de boel zodat je niet met de tipping point te maken hebt tussen -pi en pi, maakt de if statement overzichtelijk
-            angle_to_prey_transformed = angle_to_prey - angle_fov
-            if self.field_of_view / 2 > angle_to_prey_transformed and angle_to_prey_transformed > -self.field_of_view / 2:
+            # vergelijk dot products in plaats van angles aangezien tipping point van angles veel gedoe geven
+            vector_to_prey = Vector(prey.x - self.x, prey.y - self.y).Normalize()
+            vector_fov = Vector(self.vx, self.vy).Normalize()
+            d = dot(vector_to_prey, vector_fov)
+            if d > self.dot_from_angle:
                 filtered_visual_indices.append(index)
 
         return filtered_visual_indices
@@ -104,7 +104,6 @@ class Predator():
 
         if len(self.visual_indices) != 0:
             self.predation_detected = True #If a prey is detected, the flag is set to True 
-            
             
             # Use a strategy to find the prefered prey
             #selected_prey = self.strat1(self.visual_indices, preys)

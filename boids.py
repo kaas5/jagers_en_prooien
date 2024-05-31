@@ -2,7 +2,7 @@ import numpy as np
 from predator import Predator
 import matplotlib.pyplot as plt
 
-from tools import NEIGHBORHOOD_RADIUS, Vector, getDistance, getDistanceSquared
+from tools import NEIGHBORHOOD_RADIUS, Vector, getDistance, getDistanceSquared, dot
 
 class Boid():
 
@@ -23,6 +23,7 @@ class Boid():
         
         self.visual_range = visual_range
         self.field_of_view = field_of_view
+        self.dot_from_angle = dot(Vector(np.cos(self.field_of_view / 2), np.sin(self.field_of_view / 2)), Vector(1,0))
 
     def potential_repulsion(self, window, turning_factor, obstacles):
 
@@ -67,13 +68,11 @@ class Boid():
                 self.ax += repulsion.x * repulsion_magnitude
                 self.ay += repulsion.y * repulsion_magnitude
         
-    def is_predator_in_fov(self, predator):
-        angle_to_prey = np.arctan2(predator.y - self.y, predator.x - self.x)
-        angle_fov = np.arctan2(self.vy, self.vx)
-
-        # we draaien de boel zodat je niet met de tipping point te maken hebt tussen -pi en pi, maakt de if statement overzichtelijk
-        angle_to_prey_transformed = angle_to_prey - angle_fov
-        return self.field_of_view / 2 > angle_to_prey_transformed and angle_to_prey_transformed > -self.field_of_view / 2
+    def is_predator_in_fov(self, predator):    
+        vector_to_predator = Vector(predator.x - self.x, predator.y - self.y).Normalize()
+        vector_fov = Vector(self.vx, self.vy).Normalize()
+        d = dot(vector_to_predator, vector_fov)
+        return d > self.dot_from_angle
 
     def separation(self, close_neighbours):
         close_dx, close_dy = 0, 0

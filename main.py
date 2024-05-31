@@ -35,9 +35,9 @@ def do_iets():
     obstacle_positions = None
     obstacle_radii = None
 
-    params = [0.3960813864618293, 0.35390929788813874, 0.7653877011377689, 65.48370666069839]
-    params = [0.511976052604978,  0.6345727757488085,  0.6603680719815939, 70.61169784812101]
-
+    #params = [0.3960813864618293, 0.35390929788813874, 0.7653877011377689, 65.48370666069839]
+    #params = [0.511976052604978,  0.6345727757488085,  0.6603680719815939, 70.61169784812101]
+    params = None
     simulation = Simulation(window, margin, nr_agents, render_screen, 
                             obstacle_positions=obstacle_positions, obstacle_radii=obstacle_radii, take_screenshots=take_screenshots,
                             run_for_ticks = run_for_ticks, param_set = params, max_fps=max_fps, log_to_console=log_to_console)

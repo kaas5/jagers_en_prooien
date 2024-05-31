@@ -80,6 +80,9 @@ def getDistance(v1, v2):
 def getDistanceSquared(v1, v2):
     return (v2.x - v1.x)*(v2.x - v1.x) + (v2.y -v1.y)*(v2.y - v1.y)
 
+def dot(v1, v2):
+    return v1.x * v2.x + v1.y * v2.y 
+
 def AddVectors(v1, v2):
     return Vector(v1.x + v2.x, v1.y + v2.y)
 
