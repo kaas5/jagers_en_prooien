@@ -2,11 +2,7 @@ from simulation import Simulation
 import random
 import numpy as np
 
-import threading
-import queue
-
 import multiprocessing as mp
-
 
 class EA:
     def fitness(param_set, q):
@@ -17,7 +13,6 @@ class EA:
         log_to_console = False
         run_for_ticks = 5000
         max_fps=120
-        print(param_set)
         simulation = Simulation(window, margin, nr_agents, render_screen, run_for_ticks = run_for_ticks, param_set = param_set, max_fps=max_fps, log_to_console=log_to_console)
         fitness = simulation.run()
         q.put_nowait(fitness)
@@ -30,7 +25,7 @@ class EA:
                 self.alignment_factor = param_set[1]
                 self.cohesion_factor = param_set[2]
                 self.visual_range = param_set[4]"""
-            individual = [random.uniform(0,1),random.uniform(0,1),random.uniform(0,1),random.uniform(0,100)]
+            individual = [random.uniform(0,.1),random.uniform(0,1),random.uniform(0,.1),random.uniform(0,100)]
             population.append(individual)
         return population
     
@@ -59,7 +54,10 @@ class EA:
         for individual in offspring:
             for i in range(len(individual)):
                 if random.random() < mutation_rate:
-                    if i < 3:
+                    if i == 0 or i == 2:
+                        individual[i] += random.uniform(-0.01, 0.01) #
+                        individual[i] = max(0, min(1, individual[i]))
+                    elif i == 1:
                         individual[i] += random.uniform(-0.1, 0.1) #
                         individual[i] = max(0, min(1, individual[i]))
                     else:

@@ -107,8 +107,8 @@ class Predator():
             self.predation_detected = True #If a prey is detected, the flag is set to True 
             
             # Use a strategy to find the prefered prey
-            selected_prey = self.strat1(self.visual_indices, preys)
-            #selected_prey = self.strat3(self.visual_indices, preys)
+            #selected_prey = self.strat1(self.visual_indices, preys)
+            selected_prey = self.strat3(self.visual_indices, preys)
             #selected_prey = self.strat3_1(self.visual_indices, preys) # niet perse sneller :(, en er zit bug in?
 
             if selected_prey != self.target_prey and self.target_prey is not None:

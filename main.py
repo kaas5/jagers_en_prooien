@@ -35,10 +35,15 @@ def do_iets():
     obstacle_positions = None
     obstacle_radii = None
 
-    #params = [0.3960813864618293, 0.35390929788813874, 0.7653877011377689, 65.48370666069839]
-    #params = [0.511976052604978,  0.6345727757488085,  0.6603680719815939, 70.61169784812101]
-    params = [0.07418464119893287, 0.5633488593935208, 0.012327049680472046, 61.01179559354861]
-    params =  [0.6259512077058313, 0.5927905302925731, 0.3823014073924705, 59.48995404592102]
+    params = [0.5788127947585386, 0.2457762774523715, 0.5377364142585395, 83.47942892085453] # beste voor strat1 en (0,1; 0,1; 0,1; 0,100) paraminterval
+
+    # eerste pogingen
+    params = [0.0851232609321712, 0.016998488672687596, 0.08680035861522738, 70.80971481930916] # beste voor strat1 en (0,.1; 0,1; 0,.1; 0,100) paraminterval
+    params = [0.0705874255870059, 0.38190287786556054, 0.0700662020592468, 66.66784081807292] # beste voor strat3 en (0,.1; 0,1; 0,.1; 0,100) paraminterval
+
+    # 2e pogingen
+    params = [0.058484415168636054, 0.2726436335765634, 0.0583633101801989, 78.549701308815] # beste voor strat1 en (0,.1; 0,1; 0,.1; 0,100) paraminterval
+    params = [0.036144750344737554, 0.3352422452549675, 0.03580813075193681, 47.422502543158444] # beste voor strat3 en (0,.1; 0,1; 0,.1; 0,100) paraminterval
     #params = None
     simulation = Simulation(window, margin, nr_agents, render_screen, 
                             obstacle_positions=obstacle_positions, obstacle_radii=obstacle_radii, take_screenshots=take_screenshots,
