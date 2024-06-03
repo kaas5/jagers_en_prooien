@@ -15,7 +15,8 @@ class Predator():
         self.ax = 0.0
         self.ay = 0.0
 
-        self.visual_predation = 99999
+        self.visual_predation = 100
+        self.wandering_factor = 0.2
         self.direction = np.arctan2(self.vy, self.vx)
         self.predation_detected = False
         self.centroid = [self.x, self.y]
@@ -99,15 +100,15 @@ class Predator():
         
         if len(self.visual_indices) == 0 and self.predation_detected == True :
             # Any prey can't be seen, so the predator is randomly moving
-            self.vx = self.vx + np.random.uniform(-0.1, 0.1)
-            self.vy = self.vy + np.random.uniform(-0.1, 0.1)
+            self.vx = self.vx + np.random.uniform(-self.wandering_factor, self.wandering_factor)
+            self.vy = self.vy + np.random.uniform(-self.wandering_factor, self.wandering_factor)
 
         if len(self.visual_indices) != 0:
             self.predation_detected = True #If a prey is detected, the flag is set to True 
             
             # Use a strategy to find the prefered prey
-            #selected_prey = self.strat1(self.visual_indices, preys)
-            selected_prey = self.strat3(self.visual_indices, preys)
+            selected_prey = self.strat1(self.visual_indices, preys)
+            #selected_prey = self.strat3(self.visual_indices, preys)
             #selected_prey = self.strat3_1(self.visual_indices, preys) # niet perse sneller :(, en er zit bug in?
 
             if selected_prey != self.target_prey and self.target_prey is not None:
@@ -135,7 +136,7 @@ class Predator():
                 preys.remove(self.target_prey)
                 self.target_prey = None
                 self.visual_indices = [] # dit updaten voor 1 frame is erg veel gedoe aangezien de indices nu zijn verschoven, dus skippen we
-                self.eating = True
+                #self.eating = True
             
                     
     def potential_repulsion(self, window, turning_factor, obstacles):

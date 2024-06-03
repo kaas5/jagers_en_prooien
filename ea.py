@@ -2,8 +2,14 @@ from simulation import Simulation
 import random
 import numpy as np
 
+import threading
+import queue
+
+import multiprocessing as mp
+
+
 class EA:
-    def fitness(param_set):
+    def fitness(param_set, q):
         window = (500, 500)
         margin =   420
         nr_agents = 20
@@ -14,6 +20,7 @@ class EA:
         print(param_set)
         simulation = Simulation(window, margin, nr_agents, render_screen, run_for_ticks = run_for_ticks, param_set = param_set, max_fps=max_fps, log_to_console=log_to_console)
         fitness = simulation.run()
+        q.put_nowait(fitness)
         return fitness
 
     def init_population(N):
@@ -52,7 +59,6 @@ class EA:
         for individual in offspring:
             for i in range(len(individual)):
                 if random.random() < mutation_rate:
-                    print('mutatie')
                     if i < 3:
                         individual[i] += random.uniform(-0.1, 0.1) #
                         individual[i] = max(0, min(1, individual[i]))
@@ -71,7 +77,22 @@ class EA:
             scores = []
             print(f"Generation {generation + 1}")
             for individual in population:
-                scores.append(EA.fitness(individual))
+                
+                q = mp.Queue()
+                processpool_size = 5
+                processes = []
+                
+                for _ in range(processpool_size):
+                    processes.append(mp.Process(target=EA.fitness, args=(individual, q)))
+                    processes[-1].start()
+
+                accum = 0
+                for t in processes:
+                    t.join()
+                    accum += q.get_nowait()
+
+                avg_score = accum / processpool_size
+                scores.append(avg_score)
             
             best_generation_score = max(scores)
             best_generation_params = population[np.argmax(scores)]

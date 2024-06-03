@@ -2,8 +2,9 @@ import pygame_widgets
 import pygame
 from pygame_widgets.slider import Slider
 from pygame_widgets.textbox import TextBox
-import numpy as np
 import pyautogui
+
+import numpy as np
 import time
 from boids import Boid
 from scipy.spatial import KDTree
@@ -33,7 +34,7 @@ class Simulation():
             self.separation_factor = 0.039
             self.alignment_factor = 0.5
             self.cohesion_factor = 0.025
-            self.visual_range = 50
+            self.visual_range = 40
         else:
             self.separation_factor = param_set[0]
             self.alignment_factor = param_set[1]
@@ -43,8 +44,8 @@ class Simulation():
         if self.log_to_console:
             print(f'parameters: {self.separation_factor},{self.alignment_factor},{self.cohesion_factor},{self.visual_range}')
 
-        self.boids =  [Boid(window, margin, field_of_view=np.pi , visual_range=self.visual_range) for _ in range(nr_agents)]
-        self.predator = Predator(window, field_of_view=np.pi / 2)
+        self.boids =  [Boid(window, margin, field_of_view=np.pi * 1.5, visual_range=self.visual_range) for _ in range(nr_agents)]
+        self.predator = Predator(window, field_of_view=np.pi * 0.75)
         self.kdtree = KDTree([[boid.x, boid.y] for boid in self.boids])
         self.tick = 0 
         self.time_between_screenshots = 300
@@ -59,8 +60,6 @@ class Simulation():
         if obstacle_positions is not None and obstacle_radii is not None:
             for i in range(len(obstacle_positions)):
                 self.obstacles.append(Obstacle(obstacle_positions[i][0], obstacle_positions[i][1], obstacle_radii[i]))
-
-        
 
         if self.render_screen: 
             self.init_graphics()

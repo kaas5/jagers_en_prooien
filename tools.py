@@ -40,6 +40,9 @@ class Vector:
 
     def magnitude(self):
         return sqrt(self.x * self.x + self.y * self.y)
+    
+    def magnitudeSquared(self):
+        return self.x * self.x + self.y * self.y
 
     def normalize(self):
         mag = self.magnitude()

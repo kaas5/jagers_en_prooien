@@ -74,6 +74,8 @@ class Boid():
         d = dot(vector_to_predator, vector_fov)
         return d > self.dot_from_angle
 
+    
+
     def separation(self, close_neighbours):
         close_dx, close_dy = 0, 0
         total_close = 0
@@ -119,24 +121,16 @@ class Boid():
     
     def predator_interaction(self, predator):
         if self.is_predator_in_fov(predator) or self.stress > 0.0:
+            vector_to_predator = Vector(predator.x - self.x, predator.y - self.y)
+            # todo: misschien model van collision gebruiken (langs de predator gaan ipv ervan weg gaan), kan interessant zijn?
 
-            predator_dx = predator.x - self.x #Positif si au dessus
-            predator_dy = predator.y - self.y #Positif si à droite
-
-            predator_dist = predator_dx**2 + predator_dy**2
-            predatorturnfactor = 0.2
-
-            if predator_dist < self.visual_range**2: 
-
+            distance_to_predator = vector_to_predator.magnitudeSquared()            
+            if distance_to_predator < self.visual_range**2:
                 self.stress = 1.0    #If the boid can see the predator, it is fully stress
-                if predator_dy > 0:  # predator above boid
-                    self.vy -= predatorturnfactor
-                if predator_dy < 0:  # predator below boid
-                    self.vy += predatorturnfactor
-                if predator_dx > 0:  # predator left of boid
-                    self.vx -= predatorturnfactor
-                if predator_dx < 0:  # predator right of boid
-                    self.vx += predatorturnfactor
+                predatorturnfactor = 0.1
+                vector_to_predator.Normalize()
+                self.vx += -vector_to_predator.x * predatorturnfactor
+                self.vy += -vector_to_predator.y * predatorturnfactor
 
         #else: #The prey doesn't see the predator anymore, it starts to destress and the stress is a linear function, maybe it could be great to find a paper about it ? 
         self.stress = self.stress - 1/500 #It should take 30 seconds to distess
@@ -172,6 +166,20 @@ class Boid():
         rotated_triangle = np.dot(triangle, rotation_matrix.T) + center
         return [(int(point[0]), int(point[1])) for point in rotated_triangle]
 
+    def filter_indices_in_fov(self, neighborhood_indices, boids):
+        filtered_visual_indices = []
+
+        for index in neighborhood_indices:            
+            boid = boids[index]
+            # vergelijk dot products in plaats van angles aangezien tipping point van angles veel gedoe geven
+            vector_to_boid = Vector(boid.x - self.x, boid.y - self.y).Normalize()
+            vector_fov = Vector(self.vx, self.vy).Normalize()
+            d = dot(vector_to_boid, vector_fov)
+            if d > self.dot_from_angle:
+                filtered_visual_indices.append(index)
+
+        return filtered_visual_indices
+
     def update(self, window, turning_factor, separation_factor, cohesion_factor, alignment_factor,kd_tree, boids, predator, obstacles):
         
         # This line keep the cohesion at the beginning of the simulation to have a herd
@@ -190,6 +198,8 @@ class Boid():
         
         # We determine the visual neighbours
         visual_indices = kd_tree.query_ball_point((self.x, self.y), self.visual_range)
+        visual_indices = self.filter_indices_in_fov(visual_indices, boids)
+
         visual_neighbours = [boids[i] for i in visual_indices]
 
         # Flocking Behaviour in general
