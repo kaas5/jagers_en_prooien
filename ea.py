@@ -37,7 +37,7 @@ class EA:
                 self.alignment_factor = param_set[1]
                 self.cohesion_factor = param_set[2]
                 self.visual_range = param_set[4]"""
-            individual = [random.uniform(0,.1),random.uniform(0,1),random.uniform(0,.1),random.uniform(0,100)]
+            individual = [random.uniform(0,1),random.uniform(0,1),random.uniform(0,1),random.uniform(0,100)]
             population.append(individual)
         return population
     
@@ -62,20 +62,47 @@ class EA:
         return offspring
     
     @staticmethod
-    def mutate(offspring, mutation_rate=0.2):
+    def mutate(offspring, sd, mutation_rate=0.2):
         for individual in offspring:
             for i in range(len(individual)):
                 if random.random() < mutation_rate:
-                    if i == 0 or i == 2:
-                        individual[i] += random.uniform(-0.01, 0.01) #
-                        individual[i] = max(0, min(1, individual[i]))
-                    elif i == 1:
-                        individual[i] += random.uniform(-0.1, 0.1) #
+                    if i < 3:
+                        individual[i] += np.random.normal(individual[i], sd[i])
                         individual[i] = max(0, min(1, individual[i]))
                     else:
-                        individual[i] += random.uniform(-10, 10) # 
+                        individual[i] += np.random.normal(individual[i], sd[i])
                         individual[i] = max(0, min(100, individual[i]))
         return offspring
+
+    @staticmethod
+    def get_sd(population):
+        res = []
+        for i in range(len(population[0])):
+            l = []
+            for individual in population:
+                l.append(individual[i])
+            res.append(np.std(l))
+        return res
+
+    @staticmethod
+    def mutate2(offspring, covmat, mutation_rate=0.5):
+        for individual in offspring:
+            for i in range(len(individual)):
+                if random.random() < mutation_rate:
+
+                    hoi = np.random.multivariate_normal(individual, covmat)
+                    individual[i] = hoi[i]
+                    if i < 3:
+                        individual[i] = max(0, min(1, individual[i]))
+                    else:
+                        individual[i] = max(0, min(100, individual[i]))
+        return offspring
+
+    @staticmethod
+    def get_sd2(population):
+        bla = np.array(population)
+        covmat = np.cov(bla, rowvar=False)
+        return covmat
 
     @staticmethod
     def ea(population_size, generations, selection):
@@ -114,11 +141,14 @@ class EA:
             if best_generation_score > best_score:
                 best_score = best_generation_score
                 best_params = best_generation_params
-
+            
+            sd = EA.get_sd2(population)
+            print(sd)
+            print('bestetot nu toe', best_score, best_params)
             best_individuals = EA.select_parents(population, scores, selection)
             offspring_size = population_size - selection
             offspring = EA.crossover(best_individuals, offspring_size)
-            offspring = EA.mutate(offspring)
+            offspring = EA.mutate2(offspring, sd)
             population = best_individuals + offspring
 
         return best_params, best_score
