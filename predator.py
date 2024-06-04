@@ -5,18 +5,20 @@ from tools import NEIGHBORHOOD_RADIUS, Vector, getDistance, getDistanceSquared, 
 
 class Predator():
 
-    def __init__(self, window, field_of_view=np.pi/2):
+    def __init__(self, window, field_of_view=np.pi/2, predator_strategy='strat1'):
+        if predator_strategy != 'strat1' and predator_strategy != 'strat3': print('pas op, predator_strategy moet "strat1" of "strat3" zijn!')
+
         # alles random
         self.x = np.random.uniform(0, window[0])
         self.y = np.random.uniform(0, window[1])
         self.vx = np.random.uniform(-1, 1)
         self.vy = np.random.uniform(-1, 1)
-
         self.ax = 0.0
         self.ay = 0.0
 
         self.visual_predation = 100
         self.wandering_factor = 0.2
+        self.predator_strategy = predator_strategy
         self.direction = np.arctan2(self.vy, self.vx)
         self.predation_detected = False
         self.centroid = [self.x, self.y]
@@ -54,27 +56,6 @@ class Predator():
         min_distance = np.min(accum, axis=0)
         max_distance_index = np.argmax(min_distance)
         return visual_preys[max_distance_index]
-    
-    def strat3_1(self, visual_indices, preys):
-        if len(visual_indices) == 1:
-            return preys[0]
-        
-        visual_preys = [preys[index] for index in visual_indices]
-        preys_x = list(p.x for p in visual_preys)
-        preys_y = list(p.y for p in visual_preys)
-        preys_in_range = np.array([preys_x, preys_y])
-        preys_in_range = np.tile(np.array([preys_x, preys_y]), (len(visual_indices) - 1, 1, 1))
-        preys_in_range_compare = np.empty((preys_in_range.shape[0], preys_in_range.shape[1], preys_in_range.shape[2]))
-
-        # schuif de array van preys 'langs elkaar'
-        for j in range(len(visual_indices) - 1): 
-            preys_in_range_compare[j,:,:] = np.roll(preys_in_range[j,:,:], j + 1, axis=1)
-
-        # bereken distance in bulk en sla op
-        distances = np.sum(np.square(preys_in_range - preys_in_range_compare), axis=1)
-        min_distance = np.min(distances, axis=0)
-        max_distance_index = np.argmax(min_distance)
-        return visual_preys[max_distance_index]
 
     def filter_indices_in_fov(self, visual_indices, preys):
         filtered_visual_indices = []
@@ -107,9 +88,10 @@ class Predator():
             self.predation_detected = True #If a prey is detected, the flag is set to True 
             
             # Use a strategy to find the prefered prey
-            #selected_prey = self.strat1(self.visual_indices, preys)
-            selected_prey = self.strat3(self.visual_indices, preys)
-            #selected_prey = self.strat3_1(self.visual_indices, preys) # niet perse sneller :(, en er zit bug in?
+            if self.predator_strategy == "strat1":
+                selected_prey = self.strat1(self.visual_indices, preys)
+            if self.predator_strategy == "strat3":
+                selected_prey = self.strat3(self.visual_indices, preys)
 
             if selected_prey != self.target_prey and self.target_prey is not None:
                 self.target_timeout += 1

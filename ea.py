@@ -1,19 +1,31 @@
 from simulation import Simulation
 import random
 import numpy as np
+import time
 
 import multiprocessing as mp
 
 class EA:
+
     def fitness(param_set, q):
+        nr_prey = 20
+        predator_strategy = 'strat1'
+        #obstacle_positions = [(200, 200), (100, 400), (400, 400), (400, 100)]  # Obstacle positions
+        #obstacle_radii = [50, 50, 50, 50]  # Obstacle radii
+        obstacle_positions = None
+        obstacle_radii = None
+
+
+
         window = (500, 500)
         margin =   420
-        nr_agents = 20
         render_screen = False
         log_to_console = False
         run_for_ticks = 5000
-        max_fps=120
-        simulation = Simulation(window, margin, nr_agents, render_screen, run_for_ticks = run_for_ticks, param_set = param_set, max_fps=max_fps, log_to_console=log_to_console)
+        simulation = Simulation(window, margin, nr_prey, predator_strategy=predator_strategy, 
+                                obstacle_positions=obstacle_positions, obstacle_radii=obstacle_radii,
+                                param_set=param_set, 
+                                render_screen=render_screen, log_to_console=log_to_console, run_for_ticks=run_for_ticks)
         fitness = simulation.run()
         q.put_nowait(fitness)
         return fitness
@@ -68,12 +80,13 @@ class EA:
     @staticmethod
     def ea(population_size, generations, selection):
         population = EA.init_population(population_size)
+        out_filename = f'out/scores_{int(time.time())}.txt'
         best_params = None
         best_score = float('-inf')
 
         for generation in range(generations):
             scores = []
-            print(f"Generation {generation + 1}")
+            print(f"Generation {generation}")
             for individual in population:
                 
                 q = mp.Queue()
@@ -95,6 +108,8 @@ class EA:
             best_generation_score = max(scores)
             best_generation_params = population[np.argmax(scores)]
             print(f"Best scores: {sorted(scores, reverse=True)[:selection]}")
+            with open(out_filename, 'a') as f:
+                f.write(f'{generation},{best_generation_score},{sum(scores) / len(scores)}\n')            
 
             if best_generation_score > best_score:
                 best_score = best_generation_score

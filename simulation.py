@@ -15,13 +15,15 @@ from predator import Predator
 from obstacles import Obstacle
 
 class Simulation():
-    def __init__(self, window, margin, nr_agents, render_screen, 
+    def __init__(self, window, margin, nr_agents, 
+                render_screen = True, 
                 obstacle_positions=None, obstacle_radii=None,
                 run_for_ticks = None,
                 draw_fps = True,
                 log_to_console = True,
                 max_fps = 60,
                 take_screenshots = False,
+                predator_strategy = 'strat1',
                 param_set = None):
         self.window = window
         self.margin = margin
@@ -48,7 +50,7 @@ class Simulation():
             print(f'parameters: {self.separation_factor},{self.alignment_factor},{self.cohesion_factor},{self.visual_range}')
 
         self.boids =  [Boid(window, margin, field_of_view=np.pi * 1.5, visual_range=self.visual_range) for _ in range(nr_agents)]
-        self.predator = Predator(window, field_of_view=np.pi * 0.75)
+        self.predator = Predator(window, field_of_view=np.pi * 0.75, predator_strategy=predator_strategy)
         self.kdtree = KDTree([[boid.x, boid.y] for boid in self.boids])
         self.tick = 0 
         self.time_between_screenshots = 300
