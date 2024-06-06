@@ -60,46 +60,23 @@ class EA:
             child = [(p1 + p2) / 2 for p1, p2 in zip(parent1, parent2)]
             offspring.append(child)
         return offspring
-    
+
     @staticmethod
-    def mutate(offspring, sd, mutation_rate=0.2):
+    def mutate(offspring, covmat, mutation_rate=0.5):
         for individual in offspring:
             for i in range(len(individual)):
                 if random.random() < mutation_rate:
+
+                    mutated = np.random.multivariate_normal(individual, covmat)
+                    individual[i] = mutated[i]
                     if i < 3:
-                        individual[i] += np.random.normal(individual[i], sd[i])
                         individual[i] = max(0, min(1, individual[i]))
                     else:
-                        individual[i] += np.random.normal(individual[i], sd[i])
                         individual[i] = max(0, min(100, individual[i]))
         return offspring
 
     @staticmethod
     def get_sd(population):
-        res = []
-        for i in range(len(population[0])):
-            l = []
-            for individual in population:
-                l.append(individual[i])
-            res.append(np.std(l))
-        return res
-
-    @staticmethod
-    def mutate2(offspring, covmat, mutation_rate=0.5):
-        for individual in offspring:
-            for i in range(len(individual)):
-                if random.random() < mutation_rate:
-
-                    hoi = np.random.multivariate_normal(individual, covmat)
-                    individual[i] = hoi[i]
-                    if i < 3:
-                        individual[i] = max(0, min(1, individual[i]))
-                    else:
-                        individual[i] = max(0, min(100, individual[i]))
-        return offspring
-
-    @staticmethod
-    def get_sd2(population):
         bla = np.array(population)
         covmat = np.cov(bla, rowvar=False)
         return covmat
@@ -142,13 +119,12 @@ class EA:
                 best_score = best_generation_score
                 best_params = best_generation_params
             
-            sd = EA.get_sd2(population)
-            print(sd)
-            print('bestetot nu toe', best_score, best_params)
+            sd = EA.get_sd(population)
+            print('beste parameters tot nu toe', best_score, best_params)
             best_individuals = EA.select_parents(population, scores, selection)
             offspring_size = population_size - selection
             offspring = EA.crossover(best_individuals, offspring_size)
-            offspring = EA.mutate2(offspring, sd)
+            offspring = EA.mutate(offspring, sd)
             population = best_individuals + offspring
 
         return best_params, best_score

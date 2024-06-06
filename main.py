@@ -9,7 +9,7 @@ os.environ['SDL_AUDIODRIVER'] = 'directx'
 
 def do_ea():
     population_size = 50
-    generations = 20
+    generations = 50
     selection = 10
     best_params, best_score = EA.ea(population_size, generations, selection)
     print(f"Best parameters: {best_params}")
