@@ -6,22 +6,21 @@ import time
 import multiprocessing as mp
 
 class EA:
-
     def fitness(param_set, q):
         nr_prey = 20
-        predator_strategy = 'strat1'
-        #obstacle_positions = [(200, 200), (100, 400), (400, 400), (400, 100)]  # Obstacle positions
-        #obstacle_radii = [50, 50, 50, 50]  # Obstacle radii
-        obstacle_positions = None
-        obstacle_radii = None
-
-
-
+        predator_strategy = 'strat3'
+        obstacle_positions = [(200, 200), (100, 400), (400, 400), (400, 100)]  # Obstacle positions
+        obstacle_radii = [50, 50, 50, 50]  # Obstacle radii
+        #obstacle_positions = None
+        #obstacle_radii = None
         window = (500, 500)
         margin =   420
         render_screen = False
         log_to_console = False
         run_for_ticks = 5000
+
+
+
         simulation = Simulation(window, margin, nr_prey, predator_strategy=predator_strategy, 
                                 obstacle_positions=obstacle_positions, obstacle_radii=obstacle_radii,
                                 param_set=param_set, 
