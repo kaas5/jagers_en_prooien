@@ -9,7 +9,7 @@ pygame (tested on 2.1.0)
 pygame-widgets (tested on 1.1.5)
 PyAutoGUI (tested on 0.9.54)
 
-### How to running
+### How to run
 
 Execute by running main.py
 This executes a single simulation by default.
